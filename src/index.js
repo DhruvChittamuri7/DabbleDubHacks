@@ -4,7 +4,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './index.css';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard'
-import Layout from './pages/Layout'
+import Layout from './pages/Layout';
+import NoPage from "./pages/NoPage";
 
 import reportWebVitals from './reportWebVitals';
 
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/" element={<Layout/>}>
           <Route index element={<Login/>} />
           <Route path="Dashboard" element={<Dashboard />} />
+          <Route path="*" element={<NoPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
@@ -23,7 +25,7 @@ export default function App() {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <Login />
+    <App />
   </React.StrictMode>
 );
 
