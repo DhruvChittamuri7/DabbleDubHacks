@@ -7,6 +7,7 @@ import Col from 'react-bootstrap/Col';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
+import {gapi} from 'gapi-script';
 
 class Dashboard extends React.Component {
     constructor(props) {
@@ -52,21 +53,38 @@ class Dashboard extends React.Component {
             "task-name": "CSE 311"
           },
         ], 
-        tasks: tasks
+        tasks: tasks,
+        email: null,
+        name: null
       }
       this.handleHover = this.handleHover.bind(this);
+      this.clientId = '1009792798284-51ghq4cjo0nfl1icv3edui7b51arbfo9.apps.googleusercontent.com'
+      
+
+      gapi.load('auth2', () => {
+        gapi.auth2.init({
+            client_id: '1009792798284-51ghq4cjo0nfl1icv3edui7b51arbfo9.apps.googleusercontent.com',
+            scope: "profile email" // this isn't required
+        }).then((auth2) => {
+            console.log( "signed in: " + auth2.isSignedIn.get() );  
+            const email = auth2.currentUser.get().getBasicProfile().getEmail();
+            const name = auth2.currentUser.get().getBasicProfile().getName();
+            console.log( "current user: " +  email );
+            this.setState({email: email, name: name})
+        });
+    });
+      
     }
     handleHover(taskNum) {
-      console.log(taskNum)
       let tasks = [...this.state.tasks];
-      console.log(tasks)
       let task = {...tasks[taskNum][1]}
       task.shown = !task.shown;
       tasks[taskNum][1] = task;
-      console.log(tasks)
       this.setState({
         tasks: tasks
       })
+
+      
     }
   
   
@@ -77,8 +95,8 @@ class Dashboard extends React.Component {
       <Row>
         <Col className="third" align="center" id="profileContainer" sm>
           <img src="http://2.bp.blogspot.com/_RL418eScipM/S1BY8lUpkaI/AAAAAAAAB28/rV1zODmhFPo/s320/Male+Indian2.jpg" className="profile-pic"/>
-          <h3>Dhruv Chittamuri</h3>
-          <h5>UW 2025</h5>
+          <h3>{this.state.name}</h3>
+          <h5>{this.state.email}</h5>
           <br></br>
           <Button as="a" variant="secondary">
             Settings
