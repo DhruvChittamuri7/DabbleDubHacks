@@ -46,6 +46,7 @@ class Login extends React.Component {
           console.log("This user has already been created")
         }
         this.setState({profile: res.profileObj});
+        window.location.href = "http://localhost:3000/dashboard"
     });
   }
   onFailure  (err)  {

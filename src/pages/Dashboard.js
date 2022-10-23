@@ -4,6 +4,7 @@ import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import {GoogleLogin, GoogleLogout} from 'react-google-login';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
@@ -59,9 +60,11 @@ class Dashboard extends React.Component {
       }
       this.handleHover = this.handleHover.bind(this);
       this.clientId = '1009792798284-51ghq4cjo0nfl1icv3edui7b51arbfo9.apps.googleusercontent.com'
-      
-
-      gapi.load('auth2', () => {
+      const initClient = () => {
+        // gapi.client.init({
+        // clientId:this.clientId,
+        // scope:' '
+        // })
         gapi.auth2.init({
             client_id: '1009792798284-51ghq4cjo0nfl1icv3edui7b51arbfo9.apps.googleusercontent.com',
             scope: "profile email" // this isn't required
@@ -69,10 +72,12 @@ class Dashboard extends React.Component {
             console.log( "signed in: " + auth2.isSignedIn.get() );  
             const email = auth2.currentUser.get().getBasicProfile().getEmail();
             const name = auth2.currentUser.get().getBasicProfile().getName();
-            console.log( "current user: " +  email );
-            this.setState({email: email, name: name})
+                console.log( "current user: " +  email );
+                this.setState({email: email, name: name})
+            
         });
-    });
+      }
+      gapi.load('client:auth2', initClient)
       
     }
     handleHover(taskNum) {
@@ -166,6 +171,11 @@ class Dashboard extends React.Component {
           </Button>
         </Col>
       </Row>
+            <GoogleLogout
+              clientId={this.clientId}
+              buttonText="Log Out"
+              onLogoutSuccess={() => {window.location.href = "http://localhost:3000"}}
+              />
     </Container>
     );
           }
