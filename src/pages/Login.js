@@ -43,7 +43,8 @@ class Login extends React.Component {
             name: profile.name,
             image: "http://2.bp.blogspot.com/_RL418eScipM/S1BY8lUpkaI/AAAAAAAAB28/rV1zODmhFPo/s320/Male+Indian2.jpg",
             friends: [],
-            tasks: []
+            tasks: [],
+            current_task: "Nothing"
           }).then(() => {
             console.log("created this user")
             this.setState({profile: res.profileObj});

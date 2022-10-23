@@ -17,20 +17,7 @@ class Dashboard extends React.Component {
     
       this.state = {
         friends: [],
-        friendData: [
-          {
-            "name": "Aheli", 
-            "pfp": "aheli.png", 
-            "time-elapsed": "2 hours",
-            "task-name": "MATH 126"
-          },
-          {
-            "name": "Sheshank", 
-            "pfp": "sheshank.jpg", 
-            "time-elapsed": "1.5 hours",
-            "task-name": "CSE 311"
-          },
-        ], 
+        friendData: [], 
         tasks: [],
         email: null,
         name: null,
@@ -39,6 +26,7 @@ class Dashboard extends React.Component {
       this.handleHover = this.handleHover.bind(this);
       this.addTask = this.addTask.bind(this);
       this.addFriend = this.addFriend.bind(this);
+      this.changeActiveTask = this.changeActiveTask.bind(this);
       this.clientId = '1009792798284-51ghq4cjo0nfl1icv3edui7b51arbfo9.apps.googleusercontent.com'
       const initClient = () => {
         // gapi.client.init({
@@ -74,7 +62,7 @@ class Dashboard extends React.Component {
                                     "name": friendData["name"], 
                                     "pfp": friendData["image"], 
                                     "time-elapsed": "1.5 hours",
-                                    "task-name": "CSE 311"
+                                    "task-name": friendData["current_task"]
                                     }
                             })
                             console.log(y)
@@ -105,6 +93,9 @@ class Dashboard extends React.Component {
 
     addTask() {
         let taskName = prompt("What is your task");
+        if (!taskName) {
+            return;
+        }
         console.log(this.state.tasks[0])
         const tasksRef = db.collection('tasks')
         tasksRef.add({
@@ -147,12 +138,28 @@ class Dashboard extends React.Component {
                 "name": friendData["name"], 
                 "pfp": friendData["image"], 
                 "time-elapsed": "1.5 hours",
-                "task-name": "CSE 311"
+                "task-name": friendData["current_task"]
                 })
                 this.setState({friendData:this.state.friendData})
             })
             
         })
+    }
+
+    changeActiveTask(i, total) {
+        for (let j = 0; j < total; j++) {
+            if (i == j) {
+
+                document.getElementById("task"+j).style.backgroundColor= "#90EE90";
+            }
+                else {
+
+                    document.getElementById("task"+j).style.backgroundColor= "";
+                }
+            
+        }
+        console.log(this.state.tasks[i])
+        db.collection('users').doc(this.state.email).set({current_task: this.state.tasks[i]["task"]}, {merge: true})
     }
   
     render() { return (
@@ -187,8 +194,8 @@ class Dashboard extends React.Component {
               return (
                 <div
                 onMouseLeave={() => this.handleHover(index)}
-                onMouseEnter={() => this.handleHover(index)} >
-                  <ListGroup.Item className="task">{task['task']} (Due: {task['due-date']})</ListGroup.Item>
+                onMouseEnter={() => this.handleHover(index)} onClick={() => this.changeActiveTask(index, this.state.tasks.length)}>
+                  <ListGroup.Item id={"task" + index} className="task">{task['task']} (Due: {task['due-date']})</ListGroup.Item>
                   {task["shown"] && <div className="task-overlay">working.</div>}
                 </div>
               )
@@ -232,11 +239,14 @@ class Dashboard extends React.Component {
           </Button>
         </Col>
       </Row>
+      <br></br>
+      <Row><Col align="center">
             <GoogleLogout
               clientId={this.clientId}
               buttonText="Log Out"
+              align="center"
               onLogoutSuccess={() => {window.location.href = "http://localhost:3000"}}
-              />
+              /></Col></Row>
     </Container>
     );
           }
