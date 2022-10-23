@@ -9,38 +9,15 @@ import ListGroup from 'react-bootstrap/ListGroup';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import {gapi} from 'gapi-script';
+import {db} from '../index';
 
 class Dashboard extends React.Component {
     constructor(props) {
       super(props);
     
-      let tasks = [
-        {
-          "name": "MATH 126",
-          "due-date": format(new Date(), "MM/dd, hh:mm a"),
-          "shown": false
-        },
-        {
-          "name": "CSE 143",
-          "due-date": format(new Date(), "MM/dd, hh:mm a"),
-          "shown": false
-        },
-        {
-          "name": "Boobs",
-          "due-date": format(new Date(), "MM/dd, hh:mm a"),
-          "shown": false
-        }
-      ];
-    
-      tasks = Object.keys(tasks).map((key) => {
-        return [key, tasks[key]]
-      })
-    
-      tasks.sort(function(first, second) {
-        return second[1]['due-date'] - first[1]['due-date']
-      })
       this.state = {
-        friends: [
+        friends: [],
+        friendData: [
           {
             "name": "Aheli", 
             "pfp": "aheli.png", 
@@ -54,11 +31,14 @@ class Dashboard extends React.Component {
             "task-name": "CSE 311"
           },
         ], 
-        tasks: tasks,
+        tasks: [],
         email: null,
-        name: null
+        name: null,
+        image: null
       }
       this.handleHover = this.handleHover.bind(this);
+      this.addTask = this.addTask.bind(this);
+      this.addFriend = this.addFriend.bind(this);
       this.clientId = '1009792798284-51ghq4cjo0nfl1icv3edui7b51arbfo9.apps.googleusercontent.com'
       const initClient = () => {
         // gapi.client.init({
@@ -74,6 +54,37 @@ class Dashboard extends React.Component {
             const name = auth2.currentUser.get().getBasicProfile().getName();
                 console.log( "current user: " +  email );
                 this.setState({email: email, name: name})
+                db.collection("users").doc(email).get().then((doc) => {
+                    const document = doc.data();
+                    console.log(document)
+                    this.setState({image: document["image"], friends: document["friends"], taskids: document["tasks"]})
+                    console.log(document["tasks"])
+                    Promise.all(document["tasks"].map((taskId) => {
+                        const y = db.collection('tasks').doc(taskId).get().then((doc) => doc.data())
+                        console.log(y)
+                        return y;
+                    })).then((x) => {
+                        this.setState({tasks: x})
+                        console.log(x)
+                        
+                        Promise.all(document["friends"].map((friendEmail) => {
+                            const y = db.collection('users').doc(friendEmail).get().then((doc) => {
+                                const friendData= doc.data()
+                                return {
+                                    "name": friendData["name"], 
+                                    "pfp": friendData["image"], 
+                                    "time-elapsed": "1.5 hours",
+                                    "task-name": "CSE 311"
+                                    }
+                            })
+                            console.log(y)
+                            return y;
+                        })).then((x) => {
+                            this.setState({friendData: x})
+                            console.log(x)
+                        })
+                    })
+                })
             
         });
       }
@@ -82,16 +93,67 @@ class Dashboard extends React.Component {
     }
     handleHover(taskNum) {
       let tasks = [...this.state.tasks];
-      let task = {...tasks[taskNum][1]}
+      let task = {...tasks[taskNum]}
       task.shown = !task.shown;
-      tasks[taskNum][1] = task;
+      tasks[taskNum] = task;
       this.setState({
         tasks: tasks
       })
 
       
     }
-  
+
+    addTask() {
+        let taskName = prompt("What is your task");
+        console.log(this.state.tasks[0])
+        const tasksRef = db.collection('tasks')
+        tasksRef.add({
+            owner: this.state.email,
+            task: taskName,
+            date: new Date(),
+            status: "not started"
+          }).then((docRef) => {
+            console.log("created this task")
+            const usersRef = db.collection('users').doc(this.state.email)
+            this.state.taskids.push(docRef.id)
+            console.log(this.state.taskids )
+            usersRef.set({
+                tasks: this.state.taskids 
+            }, { merge: true }).then(() => {
+                this.setState({taskids: this.state.taskids})
+                Promise.all(this.state.taskids.map((taskId) => {
+                    const y = db.collection('tasks').doc(taskId).get().then((doc) => doc.data())
+                    console.log(y)
+                    return y;
+                })).then((x) => {
+                    this.setState({tasks: x})
+                    console.log(x)
+                })
+            })
+          })// create the document
+    }
+    
+    addFriend() {
+        let friendEmail = prompt("What is your email");
+        const usersRef = db.collection('users').doc(this.state.email)
+        this.state.friends.push(friendEmail)
+        usersRef.set({
+            friends: this.state.friends
+        }, {merge: true}).then(() => {
+            db.collection('users').doc(friendEmail).get().then((doc)=>{
+                const friendData = doc.data();
+                
+                this.state.friendData.push({
+                "name": friendData["name"], 
+                "pfp": friendData["image"], 
+                "time-elapsed": "1.5 hours",
+                "task-name": "CSE 311"
+                })
+                this.setState({friendData:this.state.friendData})
+            })
+            
+        })
+    }
   
     render() { return (
       <Container id="outerContainer">
@@ -99,7 +161,7 @@ class Dashboard extends React.Component {
       <br></br>
       <Row>
         <Col className="third" align="center" id="profileContainer" sm>
-          <img src="http://2.bp.blogspot.com/_RL418eScipM/S1BY8lUpkaI/AAAAAAAAB28/rV1zODmhFPo/s320/Male+Indian2.jpg" className="profile-pic"/>
+          <img src={this.state.image} className="profile-pic"/>
           <h3>{this.state.name}</h3>
           <h5>{this.state.email}</h5>
           <br></br>
@@ -126,15 +188,14 @@ class Dashboard extends React.Component {
                 <div
                 onMouseLeave={() => this.handleHover(index)}
                 onMouseEnter={() => this.handleHover(index)} >
-                
-                  <ListGroup.Item className="task">{task[1]["name"]} (Due: {task[1]['due-date']})</ListGroup.Item>
-                  {task[1]["shown"] && <div className="task-overlay">working.</div>}
+                  <ListGroup.Item className="task">{task['task']} (Due: {task['due-date']})</ListGroup.Item>
+                  {task["shown"] && <div className="task-overlay">working.</div>}
                 </div>
               )
             })}
           </ListGroup>
           <br></br>
-          <Button as="a" variant="primary">
+          <Button as="a" variant="primary" onClick={this.addTask}>
             Add task
           </Button>
         </Col>
@@ -142,7 +203,7 @@ class Dashboard extends React.Component {
           <h3>Your friends</h3>
           <br></br>
           <ListGroup id="friendStatuses">
-            {this.state.friends.map((item) => {
+            {this.state.friendData.map((item) => {
               return (<ListGroup.Item className="friend-status">
                 <Row>
                   <Col xs={3}>
@@ -155,7 +216,7 @@ class Dashboard extends React.Component {
                     <span className="grey i">
                       Working on&nbsp;
                       <span className= "time-elapsed">{item['task-name']}</span>&nbsp;
-                      (<span className= "time-elapsed">{item['time-elapsed']}</span>)
+                      (<span className= "time-elapsed">{item['date']}</span>)
                     </span>
                   </Col>
                 </Row>
@@ -166,7 +227,7 @@ class Dashboard extends React.Component {
             
           </ListGroup>
           <br></br>
-          <Button as="a" variant="primary">
+          <Button as="a" variant="primary" onClick={this.addFriend}>
             Add friend
           </Button>
         </Col>

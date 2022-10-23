@@ -37,17 +37,25 @@ class Login extends React.Component {
     usersRef.get()
       .then((docSnapshot) => {
         if (!docSnapshot.exists) {
+          console.log("creating this user")
           usersRef.set({
             email: profile.email,
             name: profile.name,
-            image: "http://2.bp.blogspot.com/_RL418eScipM/S1BY8lUpkaI/AAAAAAAAB28/rV1zODmhFPo/s320/Male+Indian2.jpg"
-          }) // create the document
+            image: "http://2.bp.blogspot.com/_RL418eScipM/S1BY8lUpkaI/AAAAAAAAB28/rV1zODmhFPo/s320/Male+Indian2.jpg",
+            friends: [],
+            tasks: []
+          }).then(() => {
+            console.log("created this user")
+            this.setState({profile: res.profileObj});
+            window.location.href = "http://localhost:3000/dashboard"
+          })// create the document
         } else {
           console.log("This user has already been created")
+          this.setState({profile: res.profileObj});
+          window.location.href = "http://localhost:3000/dashboard"
         }
-        this.setState({profile: res.profileObj});
-        window.location.href = "http://localhost:3000/dashboard"
-    });
+        
+    })
   }
   onFailure  (err)  {
     console.log("failed", err)
