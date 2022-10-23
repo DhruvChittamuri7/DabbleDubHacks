@@ -3,26 +3,12 @@ import {GoogleLogin, GoogleLogout} from 'react-google-login';
 import {gapi} from 'gapi-script';
 import React, {useState, useEffect} from 'react';
 import NameForm from '../Form';
+import {db} from '../index';
 
 
 
-import firebase from 'firebase/compat/app';
-import { initializeApp} from 'firebase/app'
 import 'firebase/compat/firestore'
 import 'firebase/compat/auth'
-
-var firebaseConfig = {
-  apiKey: "AIzaSyDcqMSqs0hAtKX4_7NHDMEabNkcKXDhnFo",
-  authDomain: "dabble-c024e.firebaseapp.com",
-  projectId: "dabble-c024e",
-  storageBucket: "dabble-c024e.appspot.com",
-  messagingSenderId: "1009792798284",
-  appId: "1:1009792798284:web:8ac49fa0fbd8cba43c2ee9",
-  measurementId: "G-85JSPP996L"
-}
-
-firebase.initializeApp(firebaseConfig);
-export const db = firebase.firestore()
 
 
 class Login extends React.Component {
@@ -53,7 +39,8 @@ class Login extends React.Component {
         if (!docSnapshot.exists) {
           usersRef.set({
             email: profile.email,
-            name: profile.name
+            name: profile.name,
+            image: "http://2.bp.blogspot.com/_RL418eScipM/S1BY8lUpkaI/AAAAAAAAB28/rV1zODmhFPo/s320/Male+Indian2.jpg"
           }) // create the document
         } else {
           console.log("This user has already been created")
